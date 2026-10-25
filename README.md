@@ -10,7 +10,7 @@ Propuesta A: sistema para gestionar reclamos, expensas, luminarias y cámaras, e
 
 | Thomas Delli Antoni | 1122801
 
-| Joaquina Dias Rato| | 
+| Joaquina Dias Rato | 1200817
 
 ## Estructura del repositorio
 
