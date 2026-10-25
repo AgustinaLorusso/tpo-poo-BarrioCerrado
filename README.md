@@ -21,6 +21,8 @@ Propuesta A: sistema para gestionar reclamos, expensas, luminarias y cámaras, e
 /test       Pruebas unitarias 
 ```
 ## Etapa 1: Entrega 25/10/26 
+
+-Entrega tp punto 1 a 6. (Diagrama de caso de uso, UML, identificacion de patrones GRASP y principios SOLID)
 -----------------------------------
 
 ## Etapa 2: Entrega 04/11/26 
