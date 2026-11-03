@@ -2,6 +2,9 @@ package modelo.barrio;
 
 import modelo.personas.Vecino;
 import modelo.expensas.*;
+import modelo.visitas.Visita;
+import modelo.reclamos.EstadoReclamo;
+import modelo.reclamos.Reclamo;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -14,6 +17,8 @@ public class Lote {
     private final List<Vecino> autorizados = new ArrayList<>();
     private final List<Expensa> expensas = new ArrayList<>();
     private final List<String> notificaciones = new ArrayList<>();
+    private final List<Visita> visitas = new ArrayList<>();
+    private final List<Reclamo> reclamos = new ArrayList<>();
 
     public Lote(int numero, double superficie, Vecino titular) {
         if (numero <= 0) { throw new IllegalArgumentException("Numero de lote invalido."); }
@@ -66,6 +71,20 @@ public class Lote {
         return vecino != null && (mismaPersona(titular, vecino)
                 || autorizados.stream().anyMatch(v -> mismaPersona(v, vecino)));
     }
+    // Titular o residente (familiar o inquilino)
+    public boolean estaVinculado(Vecino vecino) {
+        return vecino != null && (mismaPersona(titular, vecino)
+                || residencias.stream().anyMatch(r -> mismaPersona(r.getVecino(), vecino)));
+    }
+    public void agregarReclamo(Reclamo reclamo) { reclamos.add(reclamo); }
+    public List<Reclamo> getReclamos() { return Collections.unmodifiableList(reclamos); }
+    // RF01 3a: no se da de baja un lote con reclamos abiertos o deuda
+    public boolean puedeDarseDeBaja() {
+        boolean reclamosAbiertos = reclamos.stream().anyMatch(r -> r.getEstado() != EstadoReclamo.CERRADO);
+        return !reclamosAbiertos && getDeudaTotal() == 0;
+    }
+    public void agregarVisita(Visita visita) { visitas.add(visita); }
+    public List<Visita> getVisitas() { return Collections.unmodifiableList(visitas); }
     public double calcularCoeficiente(double superficieTotal) {
         if (!Double.isFinite(superficieTotal) || superficieTotal < superficie) {
             throw new IllegalArgumentException("Superficie total invalida.");
