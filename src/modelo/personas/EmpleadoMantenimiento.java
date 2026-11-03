@@ -2,6 +2,7 @@ package modelo.personas;
 
 import java.time.LocalDate;
 import modelo.reclamos.Reclamo;
+import modelo.reclamos.TipoReclamo;
 
 public class EmpleadoMantenimiento extends Personal {
     private Especialidad especialidad;
@@ -22,9 +23,11 @@ public class EmpleadoMantenimiento extends Personal {
         this.especialidad = especialidad;
     }
 
+    // Supuesto: mantenimiento y administrativo
     @Override
     public boolean puedeAtender(Reclamo reclamo) {
-        return false; // provisorio: falta Reclamo.getTipo()
+        return reclamo.getTipo() == TipoReclamo.MANTENIMIENTO
+                || reclamo.getTipo() == TipoReclamo.ADMINISTRATIVO;
     }
 }
 
