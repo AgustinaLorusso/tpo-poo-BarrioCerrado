@@ -39,3 +39,29 @@ Propuesta A: sistema para gestionar reclamos, expensas, luminarias y cámaras, e
 
 
 
+
+## Cómo ejecutar
+
+Requiere Java 11 o superior. Desde la raíz del repositorio:
+
+```
+javac -encoding UTF-8 -d bin $(find src test -name '*.java')
+java -cp bin Main
+```
+
+Pruebas: `java -cp bin PruebaPasos3y5`, `java -cp bin PruebaPaso4` y `java -cp bin PruebaPasos6y7`.
+
+## Datos de prueba
+
+El `Main` arranca con estos datos cargados:
+
+| Tipo | Datos |
+|---|---|
+| Administrador | Carla Diaz (doc 20000000) |
+| Vecinos | Ana Perez (30111222), titular de los lotes 1 y 2 · Juan Perez (30333444), familiar del lote 1 y autorizado a reclamar · Luis Gomez (28555666), titular del lote 3 · Sofia Martinez (35777888), inquilina del lote 3 |
+| Personal | Legajo 1: Pedro Lopez, guardia de portería · Legajo 2: Mario Sosa, guardia de ronda · Legajo 3: Rosa Ruiz, mantenimiento (electricidad) · Legajo 4: Jorge Diaz, mantenimiento (plomería) |
+| Lotes | 1 (300 m²), 2 (500 m²), 3 (400 m²) |
+| Expensas | Junio a octubre 2026, presupuesto $1.200.000 por mes. Lote 1 pagó todo, lote 2 pagó la mitad, lote 3 no pagó nada y está moroso |
+| Reclamos | N° 1: mantenimiento del lote 1, en curso con Jorge · N° 2: seguridad del lote 1, abierto · N° 3: convivencia del lote 3, asignado a Mario |
+| Sectores y equipos | Acceso principal: CAM-1 · Calle 1: LUZ-1 (con falla, sin orden) y LUZ-2 · Plaza central: CAM-2 (en reparación, orden asignada a Rosa) y LUZ-3 |
+| Visitas | Marta Lopez (40123456), puntual para hoy al lote 1 · Carlos Jardinero (40654321), recurrente de lunes a viernes de 8 a 18 al lote 2 |

@@ -2,11 +2,15 @@ package modelo.barrio;
 
 import modelo.expensas.PresupuestoMensual;
 import modelo.expensas.Expensa;
+import modelo.equipos.Sector;
+import modelo.visitas.Visita;
+import java.time.LocalDateTime;
 import java.util.*;
 
 public class Barrio {
     private final String nombre;
     private final List<Lote> lotes = new ArrayList<>();
+    private final List<Sector> sectores = new ArrayList<>();
 
     public Barrio(String nombre) {
         if (nombre == null || nombre.trim().isEmpty()) { throw new IllegalArgumentException("Falta el nombre."); }
@@ -35,6 +39,26 @@ public class Barrio {
             }
         }
         for (Lote lote : lotes) { lote.generarExpensa(presupuesto, total); }
+    }
+    // RF01: baja de lote
+    public void quitarLote(Lote lote) {
+        if (!lote.puedeDarseDeBaja()) {
+            throw new IllegalStateException("El lote tiene reclamos abiertos o deuda.");
+        }
+        lotes.remove(lote);
+    }
+    public void agregarSector(Sector sector) { sectores.add(Objects.requireNonNull(sector)); }
+    public List<Sector> getSectores() { return Collections.unmodifiableList(sectores); }
+    // RF29: busca una visita vigente por documento
+    public Visita buscarVisitaVigente(String documento, LocalDateTime momento) {
+        for (Lote lote : lotes) {
+            for (Visita visita : lote.getVisitas()) {
+                if (visita.getDocumentoVisitante().equals(documento) && visita.estaVigente(momento)) {
+                    return visita;
+                }
+            }
+        }
+        return null;
     }
     public String getNombre() { return nombre; }
     public List<Lote> getLotes() { return Collections.unmodifiableList(lotes); }
