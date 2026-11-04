@@ -1,3 +1,4 @@
+import modelo.barrio.Barrio;
 import modelo.barrio.Lote;
 import modelo.personas.*;
 import modelo.reclamos.*;
@@ -22,7 +23,8 @@ public class PruebaPaso4 {
     public static void main(String[] args) {
         Vecino titular = new Vecino("Ana", "Perez", "123", "111", "ana@example.com");
         Vecino ajeno = new Vecino("Luis", "Gomez", "789", "333", "luis@example.com");
-        Administrador admin = new Administrador("Carla", "Diaz", "999", "444", "carla@example.com");
+        Administrador admin = new Administrador("Carla", "Diaz", "999", "444", "carla@example.com",
+                new Barrio("Los Aromos"));
         Guardia guardia = new Guardia("Pedro", "Lopez", "555", "666", "pedro@example.com",
                 1, LocalDate.of(2025, 1, 1), Turno.MAÑANA, Puesto.PORTERIA);
         EmpleadoMantenimiento plomero = new EmpleadoMantenimiento("Rosa", "Ruiz", "777", "888",

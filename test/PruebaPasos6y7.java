@@ -25,14 +25,14 @@ public class PruebaPasos6y7 {
     public static void main(String[] args) {
         Vecino titular = new Vecino("Ana", "Perez", "123", "111", "ana@example.com");
         Vecino ajeno = new Vecino("Luis", "Gomez", "789", "333", "luis@example.com");
-        Administrador admin = new Administrador("Carla", "Diaz", "999", "444", "carla@example.com");
+        Barrio barrio = new Barrio("Los Aromos");
+        Administrador admin = new Administrador("Carla", "Diaz", "999", "444", "carla@example.com", barrio);
         Guardia portero = new Guardia("Pedro", "Lopez", "555", "666", "pedro@example.com",
                 1, LocalDate.of(2025, 1, 1), Turno.MAÑANA, Puesto.PORTERIA);
         Guardia ronda = new Guardia("Mario", "Sosa", "556", "667", "mario@example.com",
                 3, LocalDate.of(2025, 1, 1), Turno.NOCHE, Puesto.RONDA);
         EmpleadoMantenimiento electricista = new EmpleadoMantenimiento("Rosa", "Ruiz", "777", "888",
                 "rosa@example.com", 2, LocalDate.of(2025, 1, 1), Especialidad.ELECTRICIDAD);
-        Barrio barrio = new Barrio("Los Aromos");
         Lote lote = new Lote(1, 300, titular);
         barrio.agregarLote(lote);
 

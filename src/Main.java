@@ -33,7 +33,6 @@ import modelo.reclamos.Comentario;
 import modelo.reclamos.EstadoReclamo;
 import modelo.reclamos.Reclamo;
 import modelo.reclamos.TipoReclamo;
-import modelo.reportes.GeneradorReportes;
 import modelo.visitas.Visita;
 import modelo.visitas.VisitaPuntual;
 import modelo.visitas.VisitaRecurrente;
@@ -44,8 +43,6 @@ public class Main {
     private static Barrio barrio = new Barrio("Los Aromos");
     private static Administrador admin;
     private static List<Vecino> vecinos = new ArrayList<>();
-    private static List<Personal> personal = new ArrayList<>();
-    private static GeneradorReportes reportes = new GeneradorReportes(barrio);
 
     public static void main(String[] args) {
         cargarDatosDePrueba();
@@ -385,9 +382,9 @@ public class Main {
         System.out.println("3. Equipos fuera de servicio");
         int opcion = leerEntero("Opcion: ");
         switch (opcion) {
-            case 1: reportes.reporteReclamosPendientes(); break;
-            case 2: reportes.reporteMorosidad(); break;
-            case 3: reportes.reporteEquiposFueraDeServicio(); break;
+            case 1: admin.getReportes().reporteReclamosPendientes(); break;
+            case 2: admin.getReportes().reporteMorosidad(); break;
+            case 3: admin.getReportes().reporteEquiposFueraDeServicio(); break;
             default: System.out.println("Opcion invalida.");
         }
     }
@@ -440,7 +437,7 @@ public class Main {
     }
 
     private static Personal buscarPersonal(int legajo) {
-        for (Personal empleado : personal) {
+        for (Personal empleado : admin.getPersonal()) {
             if (empleado.getLegajo() == legajo) {
                 return empleado;
             }
@@ -468,7 +465,7 @@ public class Main {
         if (admin.getDocumento().equals(documento)) {
             return admin;
         }
-        for (Personal empleado : personal) {
+        for (Personal empleado : admin.getPersonal()) {
             if (empleado.getDocumento().equals(documento)) {
                 return empleado;
             }
@@ -548,7 +545,7 @@ public class Main {
     // ===================== Datos de prueba =====================
 
     private static void cargarDatosDePrueba() {
-        admin = new Administrador("Carla", "Diaz", "20000000", "1140000000", "carla@losaromos.com");
+        admin = new Administrador("Carla", "Diaz", "20000000", "1140000000", "carla@losaromos.com", barrio);
 
         Vecino ana = new Vecino("Ana", "Perez", "30111222", "1141111111", "ana@mail.com");
         Vecino juan = new Vecino("Juan", "Perez", "30333444", "1142222222", "juan@mail.com");
@@ -567,10 +564,10 @@ public class Main {
                 "rosa@losaromos.com", 3, LocalDate.of(2021, 8, 1), Especialidad.ELECTRICIDAD);
         EmpleadoMantenimiento jorge = new EmpleadoMantenimiento("Jorge", "Diaz", "25000004", "1150000004",
                 "jorge@losaromos.com", 4, LocalDate.of(2024, 2, 10), Especialidad.PLOMERIA);
-        personal.add(pedro);
-        personal.add(mario);
-        personal.add(rosa);
-        personal.add(jorge);
+        admin.agregarPersonal(pedro);
+        admin.agregarPersonal(mario);
+        admin.agregarPersonal(rosa);
+        admin.agregarPersonal(jorge);
 
         // Lotes: Ana es titular de dos, Juan es familiar autorizado y Sofia es inquilina
         Lote lote1 = new Lote(1, 300, ana);
