@@ -2,14 +2,19 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.time.format.ResolverStyle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.function.Predicate;
 import modelo.barrio.Barrio;
 import modelo.barrio.Lote;
 import modelo.barrio.TipoResidente;
 import modelo.equipos.Camara;
 import modelo.equipos.Equipo;
+import modelo.equipos.EstadoEquipo;
 import modelo.equipos.Falla;
 import modelo.equipos.Luminaria;
 import modelo.equipos.OrdenMantenimiento;
@@ -37,36 +42,78 @@ import modelo.visitas.Visita;
 import modelo.visitas.VisitaPuntual;
 import modelo.visitas.VisitaRecurrente;
 
-// Menu de consola. No hay login: cada opcion pide el documento o legajo de quien la usa.
+// Menu de consola con inicio de sesion: cada persona ve solo las opciones de su rol.
+// Supuesto: se inicia sesion solo con el documento, sin contraseña.
 public class Main {
     private static Scanner teclado = new Scanner(System.in);
     private static Barrio barrio = new Barrio("Los Aromos");
     private static Administrador admin;
     private static List<Vecino> vecinos = new ArrayList<>();
+    private static Persona usuario;   // quien inicio sesion
 
     public static void main(String[] args) {
         cargarDatosDePrueba();
+        while (iniciarSesion()) {
+            if (usuario instanceof Administrador) {
+                menuAdministrador();
+            } else if (usuario instanceof Guardia) {
+                menuGuardia((Guardia) usuario);
+            } else if (usuario instanceof EmpleadoMantenimiento) {
+                menuMantenimiento((EmpleadoMantenimiento) usuario);
+            } else {
+                menuVecino((Vecino) usuario);
+            }
+        }
+        System.out.println("Hasta luego.");
+    }
+
+    // Devuelve false si el usuario elige salir del sistema
+    private static boolean iniciarSesion() {
+        System.out.println();
+        System.out.println("===== Barrio " + barrio.getNombre() + " =====");
+        while (true) {
+            String documento = leerTexto("Documento para iniciar sesion (0 para salir): ");
+            if (documento.equals("0")) {
+                return false;
+            }
+            try {
+                usuario = buscarPersona(documento);
+                System.out.println("Bienvenido/a, " + usuario.getNombreCompleto() + ".");
+                return true;
+            } catch (IllegalArgumentException e) {
+                System.out.println("Error: " + e.getMessage());
+            }
+        }
+    }
+
+    // ===================== Menus por rol =====================
+
+    private static void menuVecino(Vecino vecino) {
         int opcion;
         do {
             System.out.println();
-            System.out.println("===== Barrio " + barrio.getNombre() + " =====");
-            System.out.println("1. Reclamos");
-            System.out.println("2. Expensas y pagos");
-            System.out.println("3. Equipos y mantenimiento");
-            System.out.println("4. Visitas e ingresos");
-            System.out.println("5. Reportes");
-            System.out.println("6. Ejecutar procesos automaticos");
-            System.out.println("0. Salir");
+            System.out.println("=== Vecino: " + vecino.getNombreCompleto() + " ===");
+            System.out.println("1. Registrar reclamo");
+            System.out.println("2. Reabrir reclamo");
+            System.out.println("3. Agregar comentario a un reclamo");
+            System.out.println("4. Ver historial de un reclamo");
+            System.out.println("5. Consultar estado de cuenta");
+            System.out.println("6. Registrar falla de un equipo");
+            System.out.println("7. Autorizar visita puntual");
+            System.out.println("8. Autorizar visita recurrente (proveedor)");
+            System.out.println("0. Cerrar sesion");
             opcion = leerEntero("Opcion: ");
             try {
                 switch (opcion) {
-                    case 1: menuReclamos(); break;
-                    case 2: menuExpensas(); break;
-                    case 3: menuEquipos(); break;
-                    case 4: menuVisitas(); break;
-                    case 5: menuReportes(); break;
-                    case 6: procesosAutomaticos(); break;
-                    case 0: System.out.println("Hasta luego."); break;
+                    case 1: registrarReclamo(vecino); break;
+                    case 2: reabrirReclamo(); break;
+                    case 3: agregarComentario(); break;
+                    case 4: verHistorial(); break;
+                    case 5: consultarEstadoDeCuenta(); break;
+                    case 6: registrarFalla(); break;
+                    case 7: autorizarVisitaPuntual(vecino); break;
+                    case 8: autorizarVisitaRecurrente(vecino); break;
+                    case 0: System.out.println("Sesion cerrada."); break;
                     default: System.out.println("Opcion invalida.");
                 }
             } catch (RuntimeException e) {
@@ -75,73 +122,397 @@ public class Main {
         } while (opcion != 0);
     }
 
+    private static void menuGuardia(Guardia guardia) {
+        int opcion;
+        do {
+            System.out.println();
+            System.out.println("=== Guardia: " + guardia.getNombreCompleto() + " (" + guardia.getPuesto() + ") ===");
+            System.out.println("1. Consultar autorizacion vigente");
+            System.out.println("2. Registrar ingreso");
+            System.out.println("3. Registrar egreso");
+            System.out.println("4. Registrar falla de un equipo");
+            System.out.println("5. Reclamos");
+            System.out.println("0. Cerrar sesion");
+            opcion = leerEntero("Opcion: ");
+            try {
+                switch (opcion) {
+                    case 1: consultarAutorizacion(); break;
+                    case 2: registrarIngreso(guardia); break;
+                    case 3: registrarEgreso(guardia); break;
+                    case 4: registrarFalla(); break;
+                    case 5: menuReclamosPersonal(guardia); break;
+                    case 0: System.out.println("Sesion cerrada."); break;
+                    default: System.out.println("Opcion invalida.");
+                }
+            } catch (RuntimeException e) {
+                System.out.println("Error: " + e.getMessage());
+            }
+        } while (opcion != 0);
+    }
+
+    // Submenu de reclamos para el personal: solo trabaja sobre sus reclamos asignados
+    private static void menuReclamosPersonal(Personal empleado) {
+        System.out.println("1. Ver mis reclamos asignados");
+        System.out.println("2. Avanzar estado de un reclamo");
+        System.out.println("3. Agregar comentario a un reclamo");
+        System.out.println("4. Ver historial de un reclamo");
+        switch (leerEntero("Opcion: ")) {
+            case 1: verMisReclamos(empleado); break;
+            case 2: avanzarEstado(); break;
+            case 3: agregarComentario(); break;
+            case 4: verHistorial(); break;
+            default: System.out.println("Opcion invalida.");
+        }
+    }
+
+    private static void menuMantenimiento(EmpleadoMantenimiento empleado) {
+        int opcion;
+        do {
+            System.out.println();
+            System.out.println("=== Mantenimiento: " + empleado.getNombreCompleto()
+                    + " (" + empleado.getEspecialidad() + ") ===");
+            System.out.println("1. Ver mis reclamos asignados");
+            System.out.println("2. Avanzar estado de un reclamo");
+            System.out.println("3. Agregar comentario a un reclamo");
+            System.out.println("4. Ver historial de un reclamo");
+            System.out.println("5. Cerrar orden de mantenimiento");
+            System.out.println("6. Consultar equipo e historial");
+            System.out.println("0. Cerrar sesion");
+            opcion = leerEntero("Opcion: ");
+            try {
+                switch (opcion) {
+                    case 1: verMisReclamos(empleado); break;
+                    case 2: avanzarEstado(); break;
+                    case 3: agregarComentario(); break;
+                    case 4: verHistorial(); break;
+                    case 5: cerrarOrden(empleado); break;
+                    case 6: consultarEquipo(); break;
+                    case 0: System.out.println("Sesion cerrada."); break;
+                    default: System.out.println("Opcion invalida.");
+                }
+            } catch (RuntimeException e) {
+                System.out.println("Error: " + e.getMessage());
+            }
+        } while (opcion != 0);
+    }
+
+    private static void menuAdministrador() {
+        int opcion;
+        do {
+            System.out.println();
+            System.out.println("=== Administracion: " + admin.getNombreCompleto() + " ===");
+            System.out.println("1. Reclamos");
+            System.out.println("2. Expensas y pagos");
+            System.out.println("3. Equipos y mantenimiento");
+            System.out.println("4. Reportes");
+            System.out.println("5. Ejecutar procesos automaticos");
+            System.out.println("6. Lotes y vecinos");
+            System.out.println("0. Cerrar sesion");
+            opcion = leerEntero("Opcion: ");
+            try {
+                switch (opcion) {
+                    case 1: menuReclamosAdministrador(); break;
+                    case 2: menuExpensas(); break;
+                    case 3: menuEquiposAdministrador(); break;
+                    case 4: menuReportes(); break;
+                    case 5: procesosAutomaticos(); break;
+                    case 6: menuLotesYVecinos(); break;
+                    case 0: System.out.println("Sesion cerrada."); break;
+                    default: System.out.println("Opcion invalida.");
+                }
+            } catch (RuntimeException e) {
+                System.out.println("Error: " + e.getMessage());
+            }
+        } while (opcion != 0);
+    }
+
+    private static void menuReclamosAdministrador() {
+        System.out.println("1. Asignar reclamo a un empleado");
+        System.out.println("2. Avanzar estado");
+        System.out.println("3. Ver historial");
+        System.out.println("4. Consultar reclamos con filtro");
+        switch (leerEntero("Opcion: ")) {
+            case 1: asignarReclamo(); break;
+            case 2: avanzarEstado(); break;
+            case 3: verHistorial(); break;
+            case 4: consultarReclamos(); break;
+            default: System.out.println("Opcion invalida.");
+        }
+    }
+
+    private static void menuExpensas() {
+        System.out.println("1. Registrar presupuesto y emitir expensas");
+        System.out.println("2. Registrar pago");
+        System.out.println("3. Registrar asiento de ajuste");
+        System.out.println("4. Consultar estado de cuenta");
+        switch (leerEntero("Opcion: ")) {
+            case 1: emitirExpensas(); break;
+            case 2: registrarPago(); break;
+            case 3: registrarAjuste(); break;
+            case 4: consultarEstadoDeCuenta(); break;
+            default: System.out.println("Opcion invalida.");
+        }
+    }
+
+    private static void menuLotesYVecinos() {
+        System.out.println("1. Dar de alta vecino");
+        System.out.println("2. Modificar vecino");
+        System.out.println("3. Dar de baja vecino");
+        System.out.println("4. Dar de alta lote");
+        System.out.println("5. Modificar lote");
+        System.out.println("6. Dar de baja lote");
+        switch (leerEntero("Opcion: ")) {
+            case 1: darDeAltaVecino(); break;
+            case 2: modificarVecino(); break;
+            case 3: darDeBajaVecino(); break;
+            case 4: darDeAltaLote(); break;
+            case 5: modificarLote(); break;
+            case 6: darDeBajaLote(); break;
+            default: System.out.println("Opcion invalida.");
+        }
+    }
+
+    // RF02
+    private static void darDeAltaVecino() {
+        String documento = leerTexto("Documento: ");
+        if (existePersona(documento)) {
+            throw new IllegalArgumentException("Ya existe una persona con ese documento.");
+        }
+        String nombre = leerTexto("Nombre: ");
+        String apellido = leerTexto("Apellido: ");
+        String telefono = leerTexto("Telefono: ");
+        String email = leerTexto("Email: ");
+        Vecino vecino = admin.darDeAltaVecino(nombre, apellido, documento, telefono, email);
+        vecinos.add(vecino);
+        System.out.println("Vecino " + vecino.getNombreCompleto() + " dado de alta.");
+    }
+
+    // RF01
+    private static void darDeAltaLote() {
+        int numero = leerEntero("Numero de lote: ");
+        double superficie = leerDecimal("Superficie (m2): ");
+        Vecino titular = buscarVecino(leerTexto("Documento del titular: "));
+        Lote lote = admin.darDeAltaLote(numero, superficie, titular);
+        System.out.println("Lote " + lote.getNumero() + " dado de alta. Titular: "
+                + titular.getNombreCompleto() + ".");
+    }
+
+    // RF02: el documento no se modifica porque identifica a la persona
+    private static void modificarVecino() {
+        Vecino vecino = buscarVecino(leerTexto("Documento del vecino: "));
+        System.out.println("Deje vacio para no cambiar el dato.");
+        String nombre = leerTexto("Nombre (" + vecino.getNombre() + "): ");
+        String apellido = leerTexto("Apellido (" + vecino.getApellido() + "): ");
+        String telefono = leerTexto("Telefono (" + vecino.getTelefono() + "): ");
+        String email = leerTexto("Email (" + vecino.getEmail() + "): ");
+        if (!nombre.isEmpty()) { vecino.setNombre(nombre); }
+        if (!apellido.isEmpty()) { vecino.setApellido(apellido); }
+        if (!telefono.isEmpty()) { vecino.setTelefono(telefono); }
+        if (!email.isEmpty()) { vecino.setEmail(email); }
+        System.out.println("Datos actualizados: " + vecino.getNombreCompleto() + ".");
+    }
+
+    // RF02
+    private static void darDeBajaVecino() {
+        Vecino vecino = buscarVecino(leerTexto("Documento del vecino: "));
+        admin.darDeBajaVecino(vecino);
+        vecinos.remove(vecino);
+        System.out.println("Vecino " + vecino.getNombreCompleto() + " dado de baja.");
+    }
+
+    // RF01: se puede cambiar la superficie y el titular
+    private static void modificarLote() {
+        Lote lote = buscarLote(leerEntero("Numero de lote: "));
+        System.out.println("Deje vacio para no cambiar el dato.");
+        String superficie = leerTexto("Superficie en m2 (" + lote.getSuperficie() + "): ");
+        String documento = leerTexto("Documento del titular (" + lote.getTitular().getNombreCompleto() + "): ");
+        // Primero se valida todo y despues se cambia, para no dejar el lote a medio modificar
+        Vecino nuevoTitular = documento.isEmpty() ? null : buscarVecino(documento);
+        if (!superficie.isEmpty()) { lote.setSuperficie(Double.parseDouble(superficie)); }
+        if (nuevoTitular != null) { lote.setTitular(nuevoTitular); }
+        System.out.println("Lote " + lote.getNumero() + " actualizado. Superficie: " + lote.getSuperficie()
+                + " m2. Titular: " + lote.getTitular().getNombreCompleto() + ".");
+    }
+
+    // RF01
+    private static void darDeBajaLote() {
+        Lote lote = buscarLote(leerEntero("Numero de lote: "));
+        admin.darDeBajaLote(lote);
+        System.out.println("Lote " + lote.getNumero() + " dado de baja.");
+    }
+
+    private static boolean existePersona(String documento) {
+        try {
+            buscarPersona(documento);
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    private static void menuEquiposAdministrador() {
+        System.out.println("1. Generar orden de mantenimiento");
+        System.out.println("2. Consultar equipo e historial");
+        switch (leerEntero("Opcion: ")) {
+            case 1: generarOrden(); break;
+            case 2: consultarEquipo(); break;
+            default: System.out.println("Opcion invalida.");
+        }
+    }
+
+    private static void menuReportes() {
+        System.out.println("1. Reclamos pendientes");
+        System.out.println("2. Morosidad por lote");
+        System.out.println("3. Equipos fuera de servicio");
+        switch (leerEntero("Opcion: ")) {
+            case 1: admin.getReportes().reporteReclamosPendientes(); break;
+            case 2: admin.getReportes().reporteMorosidad(); break;
+            case 3: admin.getReportes().reporteEquiposFueraDeServicio(); break;
+            default: System.out.println("Opcion invalida.");
+        }
+    }
+
+    // ===================== Control de acceso =====================
+
+    private static boolean esElUsuario(Persona persona) {
+        return persona != null && persona.getDocumento().equals(usuario.getDocumento());
+    }
+
+    // Buscar reclamo, flujo 2a: si el actor no tiene acceso, el sistema lo informa.
+    // Admin: todos. Personal: los que tiene asignados. Vecino: los que presento o los de su lote.
+    private static Reclamo buscarReclamoConAcceso(int numero) {
+        Reclamo reclamo = buscarReclamo(numero);
+        boolean tieneAcceso;
+        if (usuario instanceof Administrador) {
+            tieneAcceso = true;
+        } else if (usuario instanceof Personal) {
+            tieneAcceso = esElUsuario(reclamo.getResponsable());
+        } else {
+            tieneAcceso = esElUsuario(reclamo.getPresentadoPor())
+                    || esElUsuario(reclamo.getLote().getTitular());
+        }
+        if (!tieneAcceso) {
+            throw new IllegalArgumentException("No tiene acceso a ese reclamo.");
+        }
+        return reclamo;
+    }
+
+    // El administrador ve cualquier lote; un vecino solo los lotes a los que esta vinculado
+    private static Lote buscarLoteConAcceso(int numero) {
+        Lote lote = buscarLote(numero);
+        if (usuario instanceof Vecino && !lote.estaVinculado((Vecino) usuario)) {
+            throw new IllegalArgumentException("No tiene acceso a ese lote.");
+        }
+        return lote;
+    }
+
     // ===================== Reclamos =====================
 
-    private static void menuReclamos() {
-        System.out.println("1. Registrar reclamo");
-        System.out.println("2. Asignar reclamo a un empleado");
-        System.out.println("3. Avanzar estado");
-        System.out.println("4. Reabrir reclamo");
-        System.out.println("5. Agregar comentario");
-        System.out.println("6. Ver historial");
-        System.out.println("7. Consultar reclamos con filtro");
-        int opcion = leerEntero("Opcion: ");
-        switch (opcion) {
-            case 1: {
-                Vecino vecino = buscarVecino(leerTexto("Documento del vecino: "));
-                Lote lote = buscarLote(leerEntero("Numero de lote: "));
-                TipoReclamo tipo = TipoReclamo.valueOf(
-                        leerTexto("Tipo (SEGURIDAD, MANTENIMIENTO, CONVIVENCIA, ADMINISTRATIVO): ").toUpperCase());
-                Reclamo reclamo = vecino.presentarReclamo(lote, tipo, leerTexto("Descripcion: "));
-                System.out.println("Reclamo N° " + reclamo.getNumero() + " registrado con prioridad "
-                        + reclamo.getPrioridad() + ".");
-                break;
-            }
-            case 2: {
-                Reclamo reclamo = buscarReclamo(leerEntero("Numero de reclamo: "));
-                Personal empleado = buscarPersonal(leerEntero("Legajo del empleado: "));
-                admin.asignarReclamo(reclamo, empleado);
-                System.out.println("Reclamo asignado a " + empleado.getNombreCompleto() + ".");
-                break;
-            }
-            case 3: {
-                Reclamo reclamo = buscarReclamo(leerEntero("Numero de reclamo: "));
-                reclamo.avanzarEstado(leerTexto("Observacion: "));
-                System.out.println("Nuevo estado: " + reclamo.getEstado());
-                break;
-            }
-            case 4: {
-                Reclamo reclamo = buscarReclamo(leerEntero("Numero de reclamo: "));
-                reclamo.reabrir(leerTexto("Motivo: "));
-                System.out.println("Reclamo reabierto.");
-                break;
-            }
-            case 5: {
-                Reclamo reclamo = buscarReclamo(leerEntero("Numero de reclamo: "));
-                Persona autor = buscarPersona(leerTexto("Documento del autor: "));
-                reclamo.agregarComentario(autor, leerTexto("Comentario: "));
-                System.out.println("Comentario agregado.");
-                break;
-            }
-            case 6: {
-                Reclamo reclamo = buscarReclamo(leerEntero("Numero de reclamo: "));
-                System.out.println("Historial del reclamo N° " + reclamo.getNumero() + ":");
-                for (CambioEstado cambio : reclamo.getHistorial()) {
-                    System.out.println("  " + cambio.getFecha().toLocalDate() + " " + cambio.getEstado()
-                            + " - " + cambio.getObservacion());
+    // RF06
+        private static void registrarReclamo(Vecino vecino) {
+        Lote lote = buscarLote(leerEntero("Numero de lote: "));
+        System.out.println("Tipo de reclamo:");
+        TipoReclamo[] tipos = TipoReclamo.values();
+        for (int i = 0; i < tipos.length; i++) {
+            System.out.println((i + 1) + ". " + tipos[i]);
+        }
+        TipoReclamo tipo = tipos[leerEntero("Opcion: ") - 1];
+        Reclamo reclamo = vecino.presentarReclamo(lote, tipo, leerTexto("Descripcion: "));
+        System.out.println("Reclamo N° " + reclamo.getNumero() + " registrado con prioridad "
+                + reclamo.getPrioridad() + ".");
+    }
+
+    // RF07
+    private static void asignarReclamo() {
+        // Solo se muestran los reclamos abiertos, que todavia no tienen responsable
+        System.out.println("Reclamos sin asignar:");
+        int sinAsignar = 0;
+        for (Lote lote : barrio.getLotes()) {
+            for (Reclamo r : lote.getReclamos()) {
+                if (r.getEstado() == EstadoReclamo.ABIERTO) {
+                    System.out.println("  N° " + r.getNumero() + " | " + r.getTipo() + " | Prioridad "
+                            + r.getPrioridad() + " | Lote " + lote.getNumero() + " | " + r.getDescripcion());
+                    sinAsignar++;
                 }
-                System.out.println("Comentarios:");
-                for (Comentario comentario : reclamo.getComentarios()) {
-                    System.out.println("  " + comentario.getFecha().toLocalDate() + " "
-                            + comentario.getAutor().getNombreCompleto() + ": " + comentario.getTexto());
-                }
-                break;
             }
-            case 7:
-                consultarReclamos();
-                break;
-            default:
-                System.out.println("Opcion invalida.");
+        }
+        if (sinAsignar == 0) {
+            System.out.println("No hay reclamos sin asignar.");
+            return;
+        }
+        Reclamo reclamo = buscarReclamo(leerEntero("Numero de reclamo: "));
+        
+        // Solo el personal que puede atender este tipo de reclamo (polimorfismo)
+        System.out.println("Empleados que pueden atender un reclamo de " + reclamo.getTipo() + ":");
+        for (Personal p : admin.getPersonal()) {
+            if (p.puedeAtender(reclamo)) {
+                System.out.println("  Legajo " + p.getLegajo() + " | " + p.getNombreCompleto()
+                        + " | " + p.getClass().getSimpleName()
+                        + " | En curso: " + p.cantidadReclamosEnCurso());
+            }
+        }
+        Personal empleado = buscarPersonal(leerEntero("Legajo del empleado: "));
+        admin.asignarReclamo(reclamo, empleado);
+        System.out.println("Reclamo asignado a " + empleado.getNombreCompleto() + ".");
+    }
+
+
+    // RF08
+    private static void avanzarEstado() {
+        // El admin ve todos los reclamos; el personal, solo los que tiene asignados
+        System.out.println("Reclamos:");
+        if (usuario instanceof Administrador) {
+            for (Lote lote : barrio.getLotes()) {
+                for (Reclamo r : lote.getReclamos()) {
+                    System.out.println("  N° " + r.getNumero() + " | " + r.getEstado());
+                }
+            }
+        } else {
+            for (Reclamo r : ((Personal) usuario).getReclamos()) {
+                System.out.println("  N° " + r.getNumero() + " | " + r.getEstado());
+            }
+        }
+        Reclamo reclamo = buscarReclamoConAcceso(leerEntero("Numero de reclamo: "));
+        reclamo.avanzarEstado(leerTexto("Observacion: "));
+        System.out.println("Nuevo estado: " + reclamo.getEstado());
+    }
+
+    // RF11
+    private static void reabrirReclamo() {
+        Reclamo reclamo = buscarReclamoConAcceso(leerEntero("Numero de reclamo: "));
+        reclamo.reabrir(leerTexto("Motivo: "));
+        System.out.println("Reclamo reabierto.");
+    }
+
+    // RF10: el autor es quien inicio sesion
+    private static void agregarComentario() {
+        Reclamo reclamo = buscarReclamoConAcceso(leerEntero("Numero de reclamo: "));
+        reclamo.agregarComentario(usuario, leerTexto("Comentario: "));
+        System.out.println("Comentario agregado.");
+    }
+
+    // RF09
+    private static void verHistorial() {
+        Reclamo reclamo = buscarReclamoConAcceso(leerEntero("Numero de reclamo: "));
+        System.out.println("Historial del reclamo N° " + reclamo.getNumero() + ":");
+        for (CambioEstado cambio : reclamo.getHistorial()) {
+            System.out.println("  " + cambio.getFecha().toLocalDate() + " " + cambio.getEstado()
+                    + " - " + cambio.getObservacion());
+        }
+        System.out.println("Comentarios:");
+        for (Comentario comentario : reclamo.getComentarios()) {
+            System.out.println("  " + comentario.getFecha().toLocalDate() + " "
+                    + comentario.getAutor().getNombreCompleto() + ": " + comentario.getTexto());
+        }
+    }
+
+    private static void verMisReclamos(Personal empleado) {
+        if (empleado.getReclamos().isEmpty()) {
+            System.out.println("No tiene reclamos asignados.");
+        }
+        for (Reclamo reclamo : empleado.getReclamos()) {
+            System.out.println("N° " + reclamo.getNumero() + " | Lote " + reclamo.getLote().getNumero() + " | "
+                    + reclamo.getTipo() + " | " + reclamo.getEstado() + " | " + reclamo.getDescripcion());
         }
     }
 
@@ -176,218 +547,203 @@ public class Main {
 
     // ===================== Expensas =====================
 
-    private static void menuExpensas() {
-        System.out.println("1. Registrar presupuesto y emitir expensas");
-        System.out.println("2. Registrar pago");
-        System.out.println("3. Registrar asiento de ajuste");
-        System.out.println("4. Consultar estado de cuenta");
-        int opcion = leerEntero("Opcion: ");
-        switch (opcion) {
-            case 1: {
-                String periodo = leerTexto("Periodo (AAAA-MM): ");
-                double monto = leerDecimal("Monto del presupuesto: ");
-                barrio.emitirExpensas(new PresupuestoMensual(periodo, monto));
-                System.out.println("Expensas emitidas para " + barrio.getLotes().size() + " lotes.");
-                break;
+    // RF15, RF16
+    private static void emitirExpensas() {
+        String periodo = leerTexto("Periodo (AAAA-MM): ");
+        double monto = leerDecimal("Monto del presupuesto: ");
+        barrio.emitirExpensas(new PresupuestoMensual(periodo, monto));
+        System.out.println("Expensas emitidas para " + barrio.getLotes().size() + " lotes.");
+    }
+
+    // RF17
+    private static void registrarPago() {
+        Lote lote = buscarLote(leerEntero("Numero de lote: "));
+        System.out.println("Deuda actual: $" + lote.getDeudaTotal());
+        double importe = leerDecimal("Importe: ");
+        MedioPago medio = MedioPago.valueOf(
+                leerTexto("Medio de pago (EFECTIVO, TRANSFERENCIA, TARJETA): ").toUpperCase());
+        lote.registrarPago(importe, medio);
+        System.out.println("Pago registrado. Deuda restante: $" + lote.getDeudaTotal());
+    }
+
+    // RF19
+    private static void registrarAjuste() {
+        Lote lote = buscarLote(leerEntero("Numero de lote: "));
+        List<Pago> pagos = new ArrayList<>();
+        List<Expensa> expensasDePago = new ArrayList<>();
+        for (Expensa expensa : lote.getExpensas()) {
+            for (Pago pago : expensa.getPagos()) {
+                System.out.println((pagos.size() + 1) + ". " + expensa.getPeriodo() + " - "
+                        + pago.getFecha() + " $" + pago.getImporte());
+                pagos.add(pago);
+                expensasDePago.add(expensa);
             }
-            case 2: {
-                Lote lote = buscarLote(leerEntero("Numero de lote: "));
-                System.out.println("Deuda actual: $" + lote.getDeudaTotal());
-                double importe = leerDecimal("Importe: ");
-                MedioPago medio = MedioPago.valueOf(
-                        leerTexto("Medio de pago (EFECTIVO, TRANSFERENCIA, TARJETA): ").toUpperCase());
-                lote.registrarPago(importe, medio);
-                System.out.println("Pago registrado. Deuda restante: $" + lote.getDeudaTotal());
-                break;
-            }
-            case 3: {
-                Lote lote = buscarLote(leerEntero("Numero de lote: "));
-                List<Pago> pagos = new ArrayList<>();
-                List<Expensa> expensasDePago = new ArrayList<>();
-                for (Expensa expensa : lote.getExpensas()) {
-                    for (Pago pago : expensa.getPagos()) {
-                        System.out.println((pagos.size() + 1) + ". " + expensa.getPeriodo() + " - "
-                                + pago.getFecha() + " $" + pago.getImporte());
-                        pagos.add(pago);
-                        expensasDePago.add(expensa);
-                    }
-                }
-                if (pagos.isEmpty()) {
-                    System.out.println("El lote no tiene pagos.");
-                    break;
-                }
-                int indice = leerEntero("Pago a corregir: ") - 1;
-                double importe = leerDecimal("Importe del ajuste (negativo para restar): ");
-                String motivo = leerTexto("Motivo: ");
-                expensasDePago.get(indice).registrarAjuste(pagos.get(indice), LocalDate.now(), importe, motivo);
-                System.out.println("Ajuste registrado. Deuda actual: $" + lote.getDeudaTotal());
-                break;
-            }
-            case 4: {
-                Lote lote = buscarLote(leerEntero("Numero de lote: "));
-                System.out.println("Estado de cuenta del lote " + lote.getNumero() + ":");
-                for (Expensa expensa : lote.getExpensas()) {
-                    System.out.println("  " + expensa.getPeriodo() + " | Importe $" + expensa.getImporte()
-                            + " | Vence " + expensa.getFechaVencimiento() + " | " + expensa.getEstado()
-                            + " | Interes $" + expensa.calcularInteres(LocalDate.now())
-                            + " | Saldo $" + expensa.getSaldo());
-                    for (Pago pago : expensa.getPagos()) {
-                        System.out.println("      Pago " + pago.getFecha() + " $" + pago.getImporte()
-                                + " (" + pago.getMedioPago() + ")");
-                    }
-                }
-                System.out.println("Deuda total: $" + lote.getDeudaTotal()
-                        + (lote.esMoroso() ? " - MOROSO" : ""));
-                break;
-            }
-            default:
-                System.out.println("Opcion invalida.");
         }
+        if (pagos.isEmpty()) {
+            System.out.println("El lote no tiene pagos.");
+            return;
+        }
+        int indice = leerEntero("Pago a corregir: ") - 1;
+        double importe = leerDecimal("Importe del ajuste (negativo para restar): ");
+        String motivo = leerTexto("Motivo: ");
+        expensasDePago.get(indice).registrarAjuste(pagos.get(indice), LocalDate.now(), importe, motivo);
+        System.out.println("Ajuste registrado. Deuda actual: $" + lote.getDeudaTotal());
+    }
+
+    // RF21
+    private static void consultarEstadoDeCuenta() {
+        Lote lote = buscarLoteConAcceso(leerEntero("Numero de lote: "));
+        System.out.println("Estado de cuenta del lote " + lote.getNumero() + ":");
+        for (Expensa expensa : lote.getExpensas()) {
+            System.out.println("  " + expensa.getPeriodo() + " | Importe $" + expensa.getImporte()
+                    + " | Vence " + expensa.getFechaVencimiento() + " | " + expensa.getEstado()
+                    + " | Interes $" + expensa.calcularInteres(LocalDate.now())
+                    + " | Saldo $" + expensa.getSaldo());
+            for (Pago pago : expensa.getPagos()) {
+                System.out.println("      Pago " + pago.getFecha() + " $" + pago.getImporte()
+                        + " (" + pago.getMedioPago() + ")");
+            }
+        }
+        System.out.println("Deuda total: $" + lote.getDeudaTotal()
+                + (lote.esMoroso() ? " - MOROSO" : ""));
     }
 
     // ===================== Equipos =====================
 
-    private static void menuEquipos() {
-        System.out.println("1. Registrar falla");
-        System.out.println("2. Generar orden de mantenimiento");
-        System.out.println("3. Cerrar orden de mantenimiento");
-        System.out.println("4. Consultar equipo e historial");
-        int opcion = leerEntero("Opcion: ");
-        switch (opcion) {
-            case 1: {
-                Equipo equipo = buscarEquipo(leerTexto("Codigo del equipo: "));
-                Persona persona = buscarPersona(leerTexto("Documento de quien reporta: "));
-                equipo.registrarFalla(persona, leerTexto("Descripcion de la falla: "));
-                System.out.println("Falla registrada. Estado: " + equipo.getEstado());
-                break;
-            }
-            case 2: {
-                Equipo equipo = buscarEquipo(leerTexto("Codigo del equipo: "));
-                int legajo = leerEntero("Legajo del empleado de mantenimiento (0 para dejarla sin asignar): ");
-                EmpleadoMantenimiento empleado = legajo == 0 ? null : buscarEmpleadoMantenimiento(legajo);
-                OrdenMantenimiento orden = admin.generarOrden(equipo.getUltimaFalla(), empleado);
-                System.out.println("Orden N° " + orden.getNumero() + " generada con prioridad "
-                        + orden.getPrioridad() + ".");
-                break;
-            }
-            case 3: {
-                Equipo equipo = buscarEquipo(leerTexto("Codigo del equipo: "));
-                OrdenMantenimiento orden = buscarOrdenAbierta(equipo);
-                EmpleadoMantenimiento tecnico = buscarEmpleadoMantenimiento(leerEntero("Legajo del tecnico: "));
-                String descripcion = leerTexto("Descripcion de la reparacion: ");
-                if (leerTexto("Se pudo reparar? (S/N): ").equalsIgnoreCase("S")) {
-                    orden.cerrar(LocalDate.now(), tecnico, descripcion);
-                } else {
-                    orden.cerrarSinReparar(LocalDate.now(), tecnico, descripcion);
+    // RF22: quien reporta es quien inicio sesion
+    // Muestra los equipos que cumplen el filtro y pide el codigo de uno.
+    // El filtro es una lambda: recibe un equipo y devuelve true si se muestra.
+    private static Equipo elegirEquipo(String titulo, Predicate<Equipo> filtro) {
+        System.out.println(titulo);
+        int cantidad = 0;
+        for (Sector sector : barrio.getSectores()) {
+            for (Equipo equipo : sector.getEquipos()) {
+                if (filtro.test(equipo)) {
+                    System.out.println("  " + equipo.getCodigo() + " | " + equipo.getClass().getSimpleName()
+                            + " | " + sector.getNombre() + " | " + equipo.getEstado());
+                    cantidad++;
                 }
-                System.out.println("Orden cerrada. Estado del equipo: " + equipo.getEstado());
-                break;
             }
-            case 4: {
-                Equipo equipo = buscarEquipo(leerTexto("Codigo del equipo: "));
-                System.out.println(equipo.getCodigo() + " | Sector: " + equipo.getSector().getNombre()
-                        + " | Estado: " + equipo.getEstado());
-                for (OrdenMantenimiento orden : equipo.getOrdenes()) {
-                    System.out.println("  Orden N° " + orden.getNumero() + " | Apertura " + orden.getFechaApertura()
-                            + " | " + orden.getPrioridad() + " | " + orden.getDescripcionTrabajo()
-                            + (orden.estaCerrada() ? " | Cerrada " + orden.getFechaCierre()
-                            + ": " + orden.getDescripcionReparacion() : " | Abierta"));
-                }
-                break;
-            }
-            default:
-                System.out.println("Opcion invalida.");
+        }
+        if (cantidad == 0) {
+            throw new IllegalStateException("No hay equipos para esta opcion.");
+        }
+        return buscarEquipo(leerTexto("Codigo del equipo: "));
+    }
+
+    private static void registrarFalla() {
+        // Solo se puede reportar la falla de un equipo que funciona (RF22 4a)
+        Equipo equipo = elegirEquipo("Equipos operativos:", e -> e.getEstado() == EstadoEquipo.OPERATIVO);
+        equipo.registrarFalla(usuario, leerTexto("Descripcion de la falla: "));
+        System.out.println("Falla registrada. Estado: " + equipo.getEstado());
+    }
+
+    // RF23
+    private static void generarOrden() {
+        // Solo equipos con falla que todavia no tienen una orden abierta
+        Equipo equipo = elegirEquipo("Equipos con falla sin orden:",
+                e -> e.getEstado() == EstadoEquipo.CON_FALLA && !e.tieneOrdenAbierta());
+        int legajo = leerEntero("Legajo del empleado de mantenimiento (0 para dejarla sin asignar): ");
+        EmpleadoMantenimiento empleado = legajo == 0 ? null : buscarEmpleadoMantenimiento(legajo);
+        OrdenMantenimiento orden = admin.generarOrden(equipo.getUltimaFalla(), empleado);
+        System.out.println("Orden N° " + orden.getNumero() + " generada con prioridad "
+                + orden.getPrioridad() + ".");
+    }
+
+    // RF24: el tecnico es quien inicio sesion
+    private static void cerrarOrden(EmpleadoMantenimiento tecnico) {
+        // Solo las ordenes abiertas asignadas a este empleado o sin asignar
+        Equipo equipo = elegirEquipo("Equipos con orden abierta para usted:", e -> e.tieneOrdenAbierta()
+                && (buscarOrdenAbierta(e).getAsignadaA() == null || esElUsuario(buscarOrdenAbierta(e).getAsignadaA())));
+        OrdenMantenimiento orden = buscarOrdenAbierta(equipo);
+        if (orden.getAsignadaA() != null && !esElUsuario(orden.getAsignadaA())) {
+            throw new IllegalArgumentException("La orden esta asignada a otro empleado.");
+        }
+        String descripcion = leerTexto("Descripcion de la reparacion: ");
+        if (leerTexto("Se pudo reparar? (S/N): ").equalsIgnoreCase("S")) {
+            orden.cerrar(LocalDate.now(), tecnico, descripcion);
+        } else {
+            orden.cerrarSinReparar(LocalDate.now(), tecnico, descripcion);
+        }
+        System.out.println("Orden cerrada. Estado del equipo: " + equipo.getEstado());
+    }
+
+    // RF25
+    private static void consultarEquipo() {
+        Equipo equipo = elegirEquipo("Equipos del barrio:", e -> true);
+        System.out.println(equipo.getCodigo() + " | Sector: " + equipo.getSector().getNombre()
+                + " | Estado: " + equipo.getEstado());
+        for (OrdenMantenimiento orden : equipo.getOrdenes()) {
+            System.out.println("  Orden N° " + orden.getNumero() + " | Apertura " + orden.getFechaApertura()
+                    + " | " + orden.getPrioridad() + " | " + orden.getDescripcionTrabajo()
+                    + (orden.estaCerrada() ? " | Cerrada " + orden.getFechaCierre()
+                    + ": " + orden.getDescripcionReparacion() : " | Abierta"));
         }
     }
 
     // ===================== Visitas =====================
 
-    private static void menuVisitas() {
-        System.out.println("1. Autorizar visita puntual");
-        System.out.println("2. Autorizar visita recurrente (proveedor)");
-        System.out.println("3. Consultar autorizacion vigente");
-        System.out.println("4. Registrar ingreso");
-        System.out.println("5. Registrar egreso");
-        int opcion = leerEntero("Opcion: ");
-        switch (opcion) {
-            case 1: {
-                Vecino vecino = buscarVecino(leerTexto("Documento del vecino: "));
-                Lote lote = buscarLote(leerEntero("Numero de lote: "));
-                String nombre = leerTexto("Nombre del visitante: ");
-                String documento = leerTexto("Documento del visitante: ");
-                LocalDate fecha = LocalDate.parse(leerTexto("Fecha (AAAA-MM-DD): "));
-                LocalTime desde = LocalTime.parse(leerTexto("Desde (HH:MM): "));
-                LocalTime hasta = LocalTime.parse(leerTexto("Hasta (HH:MM): "));
-                vecino.autorizarVisita(new VisitaPuntual(nombre, documento, lote, fecha, desde, hasta));
-                System.out.println("Visita autorizada.");
-                break;
-            }
-            case 2: {
-                Vecino vecino = buscarVecino(leerTexto("Documento del vecino: "));
-                Lote lote = buscarLote(leerEntero("Numero de lote: "));
-                String nombre = leerTexto("Nombre del proveedor: ");
-                String documento = leerTexto("Documento del proveedor: ");
-                LocalDate desdeFecha = LocalDate.parse(leerTexto("Vigente desde (AAAA-MM-DD): "));
-                LocalDate hastaFecha = LocalDate.parse(leerTexto("Vigente hasta (AAAA-MM-DD): "));
-                String[] numeros = leerTexto("Dias (1=lunes ... 7=domingo, separados por coma): ").split(",");
-                List<DayOfWeek> dias = new ArrayList<>();
-                for (String numero : numeros) {
-                    dias.add(DayOfWeek.of(Integer.parseInt(numero.trim())));
-                }
-                LocalTime desde = LocalTime.parse(leerTexto("Desde (HH:MM): "));
-                LocalTime hasta = LocalTime.parse(leerTexto("Hasta (HH:MM): "));
-                vecino.autorizarVisita(new VisitaRecurrente(nombre, documento, lote,
-                        desdeFecha, hastaFecha, dias, desde, hasta));
-                System.out.println("Visita recurrente autorizada.");
-                break;
-            }
-            case 3: {
-                Visita visita = barrio.buscarVisitaVigente(leerTexto("Documento: "), LocalDateTime.now());
-                if (visita == null) {
-                    System.out.println("No hay autorizacion vigente.");
-                } else {
-                    System.out.println("Autorizado: " + visita.getNombreVisitante()
-                            + " | Lote " + visita.getLote().getNumero());
-                }
-                break;
-            }
-            case 4: {
-                Guardia guardia = buscarGuardia(leerEntero("Legajo del guardia: "));
-                Visita visita = barrio.buscarVisitaVigente(leerTexto("Documento del visitante: "), LocalDateTime.now());
-                if (visita == null) {
-                    System.out.println("Ingreso rechazado: no hay autorizacion vigente.");
-                } else {
-                    guardia.registrarIngreso(visita);
-                    System.out.println("Ingreso registrado: " + visita.getNombreVisitante()
-                            + " al lote " + visita.getLote().getNumero() + ".");
-                }
-                break;
-            }
-            case 5: {
-                Guardia guardia = buscarGuardia(leerEntero("Legajo del guardia: "));
-                guardia.registrarEgreso(leerTexto("Documento del visitante: "));
-                System.out.println("Egreso registrado.");
-                break;
-            }
-            default:
-                System.out.println("Opcion invalida.");
+    // RF27
+    private static void autorizarVisitaPuntual(Vecino vecino) {
+        Lote lote = buscarLote(leerEntero("Numero de lote: "));
+        String nombre = leerTexto("Nombre del visitante: ");
+        String documento = leerTexto("Documento del visitante: ");
+        LocalDate fecha = leerFecha("Fecha (AAAA-MM-DD): ");
+        LocalTime desde = leerHora("Desde (HH:MM): ");
+        LocalTime hasta = leerHora("Hasta (HH:MM): ");
+        vecino.autorizarVisita(new VisitaPuntual(nombre, documento, lote, fecha, desde, hasta));
+        System.out.println("Visita autorizada.");
+    }
+
+    // RF28
+    private static void autorizarVisitaRecurrente(Vecino vecino) {
+        Lote lote = buscarLote(leerEntero("Numero de lote: "));
+        String nombre = leerTexto("Nombre del proveedor: ");
+        String documento = leerTexto("Documento del proveedor: ");
+        LocalDate desdeFecha = leerFecha("Vigente desde (AAAA-MM-DD): ");
+        LocalDate hastaFecha = leerFecha("Vigente hasta (AAAA-MM-DD): ");
+        String[] numeros = leerTexto("Dias (1=lunes ... 7=domingo, separados por coma): ").split(",");
+        List<DayOfWeek> dias = new ArrayList<>();
+        for (String numero : numeros) {
+            dias.add(DayOfWeek.of(Integer.parseInt(numero.trim())));
+        }
+        LocalTime desde = leerHora("Desde (HH:MM): ");
+        LocalTime hasta = leerHora("Hasta (HH:MM): ");
+        vecino.autorizarVisita(new VisitaRecurrente(nombre, documento, lote,
+                desdeFecha, hastaFecha, dias, desde, hasta));
+        System.out.println("Visita recurrente autorizada.");
+    }
+
+    // RF29
+    private static void consultarAutorizacion() {
+        Visita visita = barrio.buscarVisitaVigente(leerTexto("Documento: "), LocalDateTime.now());
+        if (visita == null) {
+            System.out.println("No hay autorizacion vigente.");
+        } else {
+            System.out.println("Autorizado: " + visita.getNombreVisitante()
+                    + " | Lote " + visita.getLote().getNumero());
         }
     }
 
-    // ===================== Reportes y procesos =====================
-
-    private static void menuReportes() {
-        System.out.println("1. Reclamos pendientes");
-        System.out.println("2. Morosidad por lote");
-        System.out.println("3. Equipos fuera de servicio");
-        int opcion = leerEntero("Opcion: ");
-        switch (opcion) {
-            case 1: admin.getReportes().reporteReclamosPendientes(); break;
-            case 2: admin.getReportes().reporteMorosidad(); break;
-            case 3: admin.getReportes().reporteEquiposFueraDeServicio(); break;
-            default: System.out.println("Opcion invalida.");
+    // RF30
+    private static void registrarIngreso(Guardia guardia) {
+        Visita visita = barrio.buscarVisitaVigente(leerTexto("Documento del visitante: "), LocalDateTime.now());
+        if (visita == null) {
+            System.out.println("Ingreso rechazado: no hay autorizacion vigente.");
+        } else {
+            guardia.registrarIngreso(visita);
+            System.out.println("Ingreso registrado: " + visita.getNombreVisitante()
+                    + " al lote " + visita.getLote().getNumero() + ".");
         }
     }
+
+    // RF31
+    private static void registrarEgreso(Guardia guardia) {
+        guardia.registrarEgreso(leerTexto("Documento del visitante: "));
+        System.out.println("Egreso registrado.");
+    }
+
+    // ===================== Procesos automaticos =====================
 
     // Supuesto: los procesos automaticos se ejecutan desde el menu
     private static void procesosAutomaticos() {
@@ -528,6 +884,29 @@ public class Main {
                 return Integer.parseInt(leerTexto(mensaje));
             } catch (NumberFormatException e) {
                 System.out.println("Ingrese un numero.");
+            }
+        }
+    }
+
+    // Acepta 2026-11-5 o 2026-11-05; si esta mal, vuelve a preguntar
+    private static LocalDate leerFecha(String mensaje) {
+        while (true) {
+            try {
+                return LocalDate.parse(leerTexto(mensaje), DateTimeFormatter.ofPattern("uuuu-M-d")
+                        .withResolverStyle(ResolverStyle.STRICT));
+            } catch (DateTimeParseException e) {
+                System.out.println("Fecha invalida. Use el formato AAAA-MM-DD, por ejemplo 2026-11-05.");
+            }
+        }
+    }
+
+    // Acepta 9:00 o 09:00; si esta mal, vuelve a preguntar
+    private static LocalTime leerHora(String mensaje) {
+        while (true) {
+            try {
+                return LocalTime.parse(leerTexto(mensaje), DateTimeFormatter.ofPattern("H:mm"));
+            } catch (DateTimeParseException e) {
+                System.out.println("Hora invalida. Use el formato HH:MM, por ejemplo 09:30.");
             }
         }
     }
