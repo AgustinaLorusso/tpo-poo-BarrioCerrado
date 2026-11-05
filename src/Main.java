@@ -416,7 +416,11 @@ public class Main {
         for (int i = 0; i < tipos.length; i++) {
             System.out.println((i + 1) + ". " + tipos[i]);
         }
-        TipoReclamo tipo = tipos[leerEntero("Opcion: ") - 1];
+        int opcionTipo = leerEntero("Opcion: ");
+        if (opcionTipo < 1 || opcionTipo > tipos.length) {
+            throw new IllegalArgumentException("Tipo de reclamo invalido.");
+        }
+        TipoReclamo tipo = tipos[opcionTipo - 1];
         Reclamo reclamo = vecino.presentarReclamo(lote, tipo, leerTexto("Descripcion: "));
         System.out.println("Reclamo N° " + reclamo.getNumero() + " registrado con prioridad "
                 + reclamo.getPrioridad() + ".");
