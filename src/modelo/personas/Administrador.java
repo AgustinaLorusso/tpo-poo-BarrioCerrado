@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import modelo.barrio.Barrio;
 import modelo.barrio.Lote;
+import modelo.barrio.Residencia;
+import modelo.barrio.TipoResidente;
 import modelo.equipos.Falla;
 import modelo.equipos.OrdenMantenimiento;
 import modelo.reclamos.Reclamo;
@@ -56,6 +58,16 @@ public class Administrador extends Persona {
             lote.quitarResidente(vecino);
             lote.revocarAutorizacion(lote.getTitular(), vecino);
         }
+    }
+
+    // RF02: asignar rol de residente (familiar o inquilino) en un lote
+    public Residencia asignarRolEnLote(Lote lote, Vecino vecino, TipoResidente tipo) {
+        return lote.agregarResidente(vecino, tipo);
+    }
+
+    // RF02: reemplazar al titular de un lote (flujo 5b)
+    public void cambiarTitular(Lote lote, Vecino nuevoTitular) {
+        lote.setTitular(nuevoTitular);
     }
 
     public void asignarReclamo(Reclamo reclamo, Personal personal) {

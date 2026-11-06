@@ -101,6 +101,7 @@ public class Main {
             System.out.println("6. Registrar falla de un equipo");
             System.out.println("7. Autorizar visita puntual");
             System.out.println("8. Autorizar visita recurrente (proveedor)");
+            System.out.println("9. Registrar persona autorizada a reclamar");
             System.out.println("0. Cerrar sesion");
             opcion = leerEntero("Opcion: ");
             try {
@@ -113,6 +114,7 @@ public class Main {
                     case 6: registrarFalla(); break;
                     case 7: autorizarVisitaPuntual(vecino); break;
                     case 8: autorizarVisitaRecurrente(vecino); break;
+                    case 9: registrarPersonaAutorizada(vecino); break;
                     case 0: System.out.println("Sesion cerrada."); break;
                     default: System.out.println("Opcion invalida.");
                 }
@@ -261,6 +263,7 @@ public class Main {
         System.out.println("4. Dar de alta lote");
         System.out.println("5. Modificar lote");
         System.out.println("6. Dar de baja lote");
+        System.out.println("7. Asignar rol en lote");
         switch (leerEntero("Opcion: ")) {
             case 1: darDeAltaVecino(); break;
             case 2: modificarVecino(); break;
@@ -268,6 +271,7 @@ public class Main {
             case 4: darDeAltaLote(); break;
             case 5: modificarLote(); break;
             case 6: darDeBajaLote(); break;
+            case 7: asignarRolEnLote(); break;
             default: System.out.println("Opcion invalida.");
         }
     }
@@ -339,6 +343,35 @@ public class Main {
         Lote lote = buscarLote(leerEntero("Numero de lote: "));
         admin.darDeBajaLote(lote);
         System.out.println("Lote " + lote.getNumero() + " dado de baja.");
+    }
+
+    // RF02: Asignar rol en lote
+    private static void asignarRolEnLote() {
+        Vecino vecino = buscarVecino(leerTexto("Documento del vecino: "));
+        Lote lote = buscarLote(leerEntero("Numero de lote: "));
+        System.out.println("1. Titular");
+        System.out.println("2. Residente familiar");
+        System.out.println("3. Inquilino");
+        int rol = leerEntero("Rol: ");
+        if (rol == 1) {
+            // Flujo 5b: el lote ya tiene titular, se pide confirmar el reemplazo
+            System.out.println("El lote ya tiene titular: " + lote.getTitular().getNombreCompleto()
+                    + ". Se quitaran las personas autorizadas por el titular anterior.");
+            if (leerTexto("Reemplazarlo? (s/n): ").equalsIgnoreCase("s")) {
+                admin.cambiarTitular(lote, vecino);
+                System.out.println("Nuevo titular del lote " + lote.getNumero() + ": "
+                        + vecino.getNombreCompleto() + ".");
+            } else {
+                System.out.println("Operacion cancelada.");
+            }
+        } else if (rol == 2 || rol == 3) {
+            TipoResidente tipo = (rol == 2) ? TipoResidente.FAMILIAR : TipoResidente.INQUILINO;
+            admin.asignarRolEnLote(lote, vecino, tipo);
+            System.out.println(vecino.getNombreCompleto() + " quedo como " + tipo
+                    + " del lote " + lote.getNumero() + ".");
+        } else {
+            System.out.println("Rol invalido.");
+        }
     }
 
     private static boolean existePersona(String documento) {
@@ -687,8 +720,38 @@ public class Main {
 
     // ===================== Visitas =====================
 
+    // RF03
+    private static void registrarPersonaAutorizada(Vecino titular) {
+        // Solo el titular del lote puede autorizar (lo valida Lote.autorizarPersona)
+        Lote lote = buscarLoteConAcceso(leerEntero("Numero de lote: "));
+        String documento = leerTexto("Documento de la persona: ");
+        Vecino autorizado;
+        boolean esNuevo = false;
+        try {
+            autorizado = buscarVecino(documento);
+        } catch (IllegalArgumentException e) {
+            if (existePersona(documento)) {
+                throw new IllegalArgumentException("Ese documento pertenece a un empleado o al administrador.");
+            }
+            // Si la persona no esta registrada se piden sus datos (flujo 4b: datos incompletos)
+            String nombre = leerTexto("Nombre: ");
+            String apellido = leerTexto("Apellido: ");
+            if (nombre.isBlank() || apellido.isBlank()) {
+                throw new IllegalArgumentException("Faltan datos de la persona.");
+            }
+            autorizado = new Vecino(nombre, apellido, documento, "", "");
+            esNuevo = true;
+        }
+        lote.autorizarPersona(titular, autorizado);
+        if (esNuevo) {
+            vecinos.add(autorizado);
+        }
+        System.out.println(autorizado.getNombreCompleto() + " quedo autorizado a reclamar por el lote "
+                + lote.getNumero() + ".");
+    }
+
     // RF27
-    private static void autorizarVisitaPuntual(Vecino vecino) {
+        private static void autorizarVisitaPuntual(Vecino vecino) {
         Lote lote = buscarLote(leerEntero("Numero de lote: "));
         String nombre = leerTexto("Nombre del visitante: ");
         String documento = leerTexto("Documento del visitante: ");
