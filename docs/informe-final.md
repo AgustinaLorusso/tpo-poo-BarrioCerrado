@@ -1,53 +1,54 @@
-# Informe final
+# Informe final rediseño
 
-TP Integrador de Programación Orientada a Objetos. Propuesta A: Gestión del barrio cerrado Los Aromos.
-
-Integrantes: Thomas Delli Antoni, Agustina Lorusso y Joaquina Dias Rato.
+TP Integrador de Programación Orientada a Objetos
+Propuesta A: Gestión de un barrio cerrado (Los Aromos)
+Integrantes: Thomas Delli Antoni, Agustina Lorusso, Joaquina Dias Rato
 
 ## 1. Cambios respecto del diseño original
 
-Diferencias entre el diagrama de clases de la Etapa 1 y la implementación final (diagrama de clases, Versión 3):
+El diagrama que entregamos en la Etapa 1 fue cambiando bastante mientras programábamos. La versión que quedó como final es la Versión 3 del draw.io, que coincide con el código. Los cambios más importantes fueron estos.
 
-**Modelo**
-- **Administrador:** se le agregaron las asociaciones con Barrio, Personal y GeneradorReportes. También los métodos de alta y baja de vecinos y lotes (`darDeAltaVecino`, `darDeAltaLote`, `darDeBajaLote`, `darDeBajaVecino`), `agregarPersonal`, `asignarRolEnLote` y `cambiarTitular` (RF01 y RF02).
-- **Encargado:** se eliminó esa clase del diagrama porque no correspondía a ningún requisito.
-- **Expensa:** el estado no se guarda en un atributo; se calcula con `getEstado(fecha)` (patrón Experto). El valor `PAGADA_PARCIAL` del enum pasó a llamarse `PARCIAL`.
-- **Pago y AsientoAjuste:** la Expensa crea sus pagos (patrón Creador). Los pagos nunca se modifican ni se eliminan (RN12): las correcciones se registran como asientos de ajuste con `Expensa.registrarAjuste`, y `Pago.getImporteCorregido()` devuelve el importe con los ajustes aplicados.
-- Se usaron `LocalDate` y `LocalDateTime` en lugar de `Date`, y `reabrir` recibe el motivo de la reapertura.
+En el Administrador habíamos puesto pocas relaciones y al programar nos dimos cuenta de que necesitaba conocer al Barrio, al personal y al GeneradorReportes, así que agregamos esas asociaciones. También le sumamos los métodos para dar de alta y de baja vecinos y lotes, agregar personal, asignar un rol en un lote y cambiar el titular (RF01 y RF02). La clase Encargado, que estaba en el diagrama inicial, la sacamos porque no respondía a ningún requisito.
 
-**Interfaz**
-- Se agregó el inicio de sesión por documento. Cada rol (administrador, vecino, guardia y mantenimiento) ve un menú con sus opciones. Main guarda al usuario que inició sesión.
-- Los reportes se muestran por pantalla: no se implementó la exportación ni la impresión.
+En expensas decidimos que el estado no se guarde como atributo sino que se calcule con getEstado(fecha), porque si se guardaba podía quedar desactualizado cuando una expensa vencía sin que nadie la tocara. El valor PAGADA_PARCIAL del enum quedó como PARCIAL. La Expensa es la que crea sus pagos, y como los pagos no se pueden borrar ni modificar (RN12), las correcciones se hacen con asientos de ajuste a través de registrarAjuste. Para saber cuánto vale un pago después de los ajustes está getImporteCorregido().
 
-**Requisitos técnicos**
-- `Reclamo` implementa `Comparable<Reclamo>` (orden por prioridad y antigüedad). El reporte de morosidad usa un `Comparator` por deuda.
-- Se agregó la excepción propia `ReglaNegocioException` para las reglas de negocio de los reclamos (RN03, RN05, RN07 y la especialidad del empleado).
-- Se agregó la persistencia en archivo: las clases `Persistencia` y `DatosSistema`, y las clases del modelo implementan `Serializable`.
+Otros cambios más chicos: usamos LocalDate y LocalDateTime en vez de Date, y el método reabrir pasó a recibir el motivo, porque el caso de uso pide que quede registrado en el historial.
 
-**Diagramas de secuencia:** se corrigieron CU01 (Registrar reclamo) y CU02 (Asignar personal al reclamo) para que coincidan con los métodos implementados.
+En la interfaz agregamos un inicio de sesión con el documento, y según quién entra se muestra el menú del administrador, del vecino, del guardia o de mantenimiento. Los reportes se muestran por pantalla; no hicimos exportación ni impresión.
+
+Para cumplir los requisitos técnicos de la consigna sumamos al final:
+
+- Reclamo implementa Comparable, ordenando por prioridad y después por antigüedad, y el reporte de morosidad ordena los lotes por deuda con un Comparator.
+- Una excepción propia, ReglaNegocioException, para las reglas de los reclamos (RN03, RN05, RN07 y la especialidad del empleado).
+- Persistencia en archivo con las clases Persistencia y DatosSistema, para que los datos no se pierdan al cerrar el programa.
+
+Los dos diagramas de secuencia (Registrar reclamo y Asignar personal al reclamo) los corregimos para que usen los mismos métodos que el código.
 
 ## 2. Dificultades encontradas
 
-- **Integrar el trabajo en paralelo:** cada integrante trabajó en una rama distinta. Cuando un cambio tocaba una clase compartida, había que adaptar el código y las pruebas de los demás. Por ejemplo, el constructor de `Administrador` pasó a recibir el `Barrio` y hubo que actualizar dos pruebas. Una rama se había creado antes de que se sumaran otras pruebas, así que hubo que verificar la integración antes de mergear.
-- **Mantener el diagrama igual al código:** el diagrama se hizo antes de programar y durante la implementación aparecieron métodos y asociaciones nuevos. Hicieron falta varias revisiones para que la Versión 3 coincidiera con el código.
-- **Cálculo de intereses y redondeo:** el interés es del 3 % mensual, proporcional a los días. El redondeo a centavos de cada lote puede dar una diferencia de centavos con el presupuesto total.
-- **Persistencia de los atributos static:** la serialización no guarda los atributos `static`, como los contadores de números de reclamo y de orden y la lista de ingresos. Hubo que guardarlos aparte en `DatosSistema` y restaurarlos al cargar.
+La mayor dificultad fue juntar lo que hacía cada uno. Trabajamos en ramas separadas y cuando alguien cambiaba una clase que usaban los demás, se rompían cosas en otras partes. Por ejemplo, cuando el constructor del Administrador pasó a recibir el Barrio tuvimos que arreglar dos de las pruebas. También pasó que una rama se había creado antes de que entraran algunas pruebas a main y hubo que revisar que todo siguiera funcionando antes de mergearla.
+
+Otra cosa que nos llevó tiempo fue mantener el diagrama de clases igual al código. Como el diagrama se hizo antes de programar, cada vez que aparecía un método o una relación nueva había que volver a actualizarlo, y tuvimos que revisarlo varias veces hasta que quedó la Versión 3.
+
+En la parte de expensas costó el cálculo del interés, que es del 3 % mensual pero proporcional a los días de atraso. Además, al redondear a centavos el importe de cada lote, la suma puede diferir por algunos centavos del presupuesto total, y lo dejamos así como supuesto.
+
+Por último, con la persistencia descubrimos que la serialización no guarda los atributos static, como los contadores de reclamos y de órdenes. Si no los guardábamos, al volver a abrir el programa los números de reclamo empezaban de nuevo y se iban a repetir, así que los guardamos aparte en DatosSistema y los restauramos al iniciar.
 
 ## 3. Distribución de tareas
 
-| Integrante | Tareas | Pull requests |
-|---|---|---|
-| Thomas Delli Antoni | Reclamos, equipos y mantenimiento, visitas y reportes (pasos 4, 6, 7 y 8); validaciones; asignación de roles y personas autorizadas (RF02 y RF03); requisitos técnicos (Comparable, excepción propia y persistencia) | #6, #10, #11, #12 |
-| Agustina Lorusso | Clases de personas y enums (pasos 1 y 2) y sus pruebas; inicio de sesión y menús por rol; alta y baja de lotes y vecinos; revisión e integración de la mayoría de los PR | #4, #7, #9 |
-| Joaquina Dias Rato | Lotes, expensas, pagos, intereses, asientos de ajuste y morosidad (pasos 3 y 5), con sus pruebas | #5 |
-| Trabajo conjunto del grupo | Documento de la Etapa 1 (casos de uso, diagrama de clases y justificación de SOLID y GRASP), diagramas de secuencia, supuestos, plan de pruebas funcionales | #1, #8 |
+| Integrante | Tareas |
+|---|---|
+| Thomas Delli Antoni | Reclamos, equipos y mantenimiento, visitas y reportes (pasos 4, 6, 7 y 8); validaciones; asignación de roles y personas autorizadas (RF02 y RF03); Comparable, excepción propia y persistencia |
+| Agustina Lorusso | Personas y enums (pasos 1 y 2) con sus pruebas; inicio de sesión y menús por rol; alta y baja de lotes y vecinos; revisión de la mayoría de los pull requests |
+| Joaquina Dias Rato | Lotes, expensas, pagos, intereses, ajustes y morosidad (pasos 3 y 5) con sus pruebas |
+| Entre todos | Documento de la Etapa 1 (casos de uso, diagrama de clases, SOLID y GRASP), diagramas de secuencia, supuestos y plan de pruebas |
 
-Cada cambio se integró a `main` mediante un pull request revisado por otro integrante.
+Cada parte entró a main por un pull request que revisó otro integrante del grupo.
 
 ## 4. Reflexión del grupo
 
-Al leer la consigna, el problema parecía acotado: los casos de uso y los primeros diagramas eran simples y con pocas clases. Al empezar a programar, la complejidad aumentó de forma considerable. Cada caso de uso requería más información de la prevista, aparecieron nuevas relaciones entre clases y reglas de negocio que en el diseño no se veían. Por ese motivo, el diagrama de clases tuvo que actualizarse varias veces, hasta llegar a la Versión 3.
+Cuando leímos la consigna nos pareció un trabajo bastante acotado. Los casos de uso y los primeros diagramas salieron sin mucha complicación y con pocas clases. Pero cuando empezamos a codear todo fue creciendo: cada caso de uso necesitaba más datos de los que habíamos pensado, aparecieron relaciones entre clases que no estaban en el diagrama y reglas de negocio que recién se veían al implementarlas. Por eso el diagrama de clases terminó teniendo tres versiones.
 
-Esta experiencia nos mostró que el diseño inicial es un punto de partida y no una versión definitiva, y que conviene revisarlo a medida que avanza la implementación. También comprobamos la utilidad de los patrones GRASP y los principios SOLID para decidir qué clase debe asumir cada responsabilidad cuando el modelo crece.
+Nos quedamos con la idea de que el primer diseño sirve para arrancar, pero que no hay que tomarlo como algo cerrado, sino ir ajustándolo a medida que se programa. Los patrones GRASP nos ayudaron justamente en esos momentos, cuando no sabíamos en qué clase poner un método nuevo.
 
-En cuanto a la organización, el trabajo con ramas y pull requests no fue una novedad para el grupo, ya que era una práctica que veníamos aplicando. Esto facilitó dividir las tareas, trabajar en paralelo y revisar los cambios de cada integrante antes de integrarlos a la rama principal.
+En cuanto a la organización, trabajar con ramas y pull requests no fue algo nuevo para nosotros, porque ya lo veníamos haciendo. Eso nos facilitó repartir el trabajo y revisar lo de cada uno antes de pasarlo a main.
