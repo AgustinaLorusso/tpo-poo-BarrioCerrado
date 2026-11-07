@@ -20,6 +20,7 @@ import modelo.equipos.Luminaria;
 import modelo.equipos.OrdenMantenimiento;
 import modelo.equipos.Sector;
 import modelo.equipos.TipoSector;
+import modelo.excepciones.ReglaNegocioException;
 import modelo.expensas.Expensa;
 import modelo.expensas.MedioPago;
 import modelo.expensas.Pago;
@@ -41,6 +42,8 @@ import modelo.reclamos.TipoReclamo;
 import modelo.visitas.Visita;
 import modelo.visitas.VisitaPuntual;
 import modelo.visitas.VisitaRecurrente;
+import persistencia.DatosSistema;
+import persistencia.Persistencia;
 
 // Menu de consola con inicio de sesion: cada persona ve solo las opciones de su rol.
 // Supuesto: se inicia sesion solo con el documento, sin contraseña.
@@ -52,7 +55,7 @@ public class Main {
     private static Persona usuario;   // quien inicio sesion
 
     public static void main(String[] args) {
-        cargarDatosDePrueba();
+        cargarDatos();
         while (iniciarSesion()) {
             if (usuario instanceof Administrador) {
                 menuAdministrador();
@@ -63,8 +66,31 @@ public class Main {
             } else {
                 menuVecino((Vecino) usuario);
             }
+            guardarDatos();   // se guarda al cerrar cada sesion
         }
+        guardarDatos();
         System.out.println("Hasta luego.");
+    }
+
+    // Si hay datos guardados se usan; si no, se cargan los datos de prueba
+    private static void cargarDatos() {
+        DatosSistema datos = Persistencia.existenDatos() ? Persistencia.cargar() : null;
+        if (datos == null) {
+            cargarDatosDePrueba();
+            System.out.println("Se cargaron los datos de prueba.");
+            return;
+        }
+        datos.restaurarEstaticos();
+        admin = datos.getAdmin();
+        barrio = admin.getBarrio();
+        vecinos = datos.getVecinos();
+        System.out.println("Se cargaron los datos guardados.");
+    }
+
+    private static void guardarDatos() {
+        if (Persistencia.guardar(new DatosSistema(admin, vecinos))) {
+            System.out.println("Datos guardados.");
+        }
     }
 
     // Devuelve false si el usuario elige salir del sistema
@@ -118,6 +144,8 @@ public class Main {
                     case 0: System.out.println("Sesion cerrada."); break;
                     default: System.out.println("Opcion invalida.");
                 }
+            } catch (ReglaNegocioException e) {
+                System.out.println("Regla de negocio: " + e.getMessage());
             } catch (RuntimeException e) {
                 System.out.println("Error: " + e.getMessage());
             }
@@ -146,6 +174,8 @@ public class Main {
                     case 0: System.out.println("Sesion cerrada."); break;
                     default: System.out.println("Opcion invalida.");
                 }
+            } catch (ReglaNegocioException e) {
+                System.out.println("Regla de negocio: " + e.getMessage());
             } catch (RuntimeException e) {
                 System.out.println("Error: " + e.getMessage());
             }
@@ -192,6 +222,8 @@ public class Main {
                     case 0: System.out.println("Sesion cerrada."); break;
                     default: System.out.println("Opcion invalida.");
                 }
+            } catch (ReglaNegocioException e) {
+                System.out.println("Regla de negocio: " + e.getMessage());
             } catch (RuntimeException e) {
                 System.out.println("Error: " + e.getMessage());
             }
@@ -222,6 +254,8 @@ public class Main {
                     case 0: System.out.println("Sesion cerrada."); break;
                     default: System.out.println("Opcion invalida.");
                 }
+            } catch (ReglaNegocioException e) {
+                System.out.println("Regla de negocio: " + e.getMessage());
             } catch (RuntimeException e) {
                 System.out.println("Error: " + e.getMessage());
             }

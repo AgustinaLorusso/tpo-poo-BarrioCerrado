@@ -1,11 +1,12 @@
 package modelo.visitas;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import modelo.personas.Guardia;
 
-public class RegistroIngreso {
+public class RegistroIngreso implements Serializable {
     // Todos los ingresos, para controlar RN19 por persona
     private static List<RegistroIngreso> todos = new ArrayList<>();
 
@@ -20,6 +21,15 @@ public class RegistroIngreso {
         this.fechaHoraIngreso = fechaHoraIngreso;
         visita.agregarRegistro(this);
         todos.add(this);
+    }
+
+    // Persistencia: la lista es static y no se guarda con cada objeto
+    public static List<RegistroIngreso> getTodos() {
+        return todos;
+    }
+
+    public static void setTodos(List<RegistroIngreso> registros) {
+        todos = registros;
     }
 
     // RN19: busca un ingreso sin egreso de esa persona

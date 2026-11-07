@@ -1,10 +1,11 @@
 package modelo.barrio;
 
+import java.io.Serializable;
 import modelo.personas.Vecino;
 import java.util.Objects;
 
 /** Vincula un vecino a un lote; el titular se registra directamente en Lote. */
-public class Residencia {
+public class Residencia implements Serializable {
     private final Vecino vecino;
     private final Lote lote;
     private final TipoResidente tipo;

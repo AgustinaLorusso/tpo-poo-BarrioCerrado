@@ -1,9 +1,10 @@
 package modelo.equipos;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Sector {
+public class Sector implements Serializable {
     private String nombre;
     private TipoSector tipo;
     private List<Equipo> equipos = new ArrayList<>();

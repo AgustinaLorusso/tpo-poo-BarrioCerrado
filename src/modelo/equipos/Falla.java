@@ -1,9 +1,10 @@
 package modelo.equipos;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import modelo.personas.Persona;
 
-public class Falla {
+public class Falla implements Serializable {
     private LocalDateTime fecha;
     private String descripcion;
     private Equipo equipo;

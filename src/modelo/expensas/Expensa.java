@@ -1,5 +1,6 @@
 package modelo.expensas;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
@@ -10,7 +11,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class Expensa {
+public class Expensa implements Serializable {
     private final String periodo;
     private final double importe;
     private final LocalDate fechaVencimiento;

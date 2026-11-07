@@ -51,6 +51,11 @@ java -cp bin Main
 
 Pruebas: `java -cp bin PruebaPaso1y2`, `java -cp bin PruebaPasos3y5`, `java -cp bin PruebaPaso4` y `java -cp bin PruebaPasos6y7`.
 
+### Persistencia
+
+Los datos se guardan en `datos/barrio.dat` al cerrar cada sesión y al salir del sistema, y se leen al iniciar.
+Si el archivo no existe (primera ejecución) se cargan los datos de prueba. Para volver a los datos de prueba, borrar la carpeta `datos/`.
+
 ## Inicio de sesión
 
 Al arrancar, el sistema pide el documento y muestra el menú según el rol. Con 0 se sale.

@@ -1,10 +1,11 @@
 package modelo.expensas;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.Objects;
 
 /** Un importe negativo reduce el pago; uno positivo lo incrementa. */
-public class AsientoAjuste {
+public class AsientoAjuste implements Serializable {
     private final LocalDate fecha;
     private final double importe;
     private final String motivo;

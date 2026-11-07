@@ -1,8 +1,13 @@
 package modelo.reportes;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import modelo.barrio.Barrio;
 import modelo.barrio.Lote;
 import modelo.equipos.Camara;
@@ -16,7 +21,7 @@ import modelo.reclamos.EstadoReclamo;
 import modelo.reclamos.Reclamo;
 
 // Fabricacion pura: arma los reportes sin cargar a Administrador ni a las clases del modelo
-public class GeneradorReportes {
+public class GeneradorReportes implements Serializable {
     private Barrio barrio;
 
     public GeneradorReportes(Barrio barrio) {
@@ -26,22 +31,26 @@ public class GeneradorReportes {
     // RF32
     public void reporteReclamosPendientes() {
         System.out.println("=== Reclamos pendientes ===");
-        int cantidad = 0;
+        List<Reclamo> pendientes = new ArrayList<>();
         for (Lote lote : barrio.getLotes()) {
             for (Reclamo reclamo : lote.getReclamos()) {
                 if (reclamo.getEstado() != EstadoReclamo.CERRADO) {
-                    String responsable = reclamo.getResponsable() == null
-                            ? "sin asignar" : reclamo.getResponsable().getNombreCompleto();
-                    long dias = ChronoUnit.DAYS.between(reclamo.getFecha(), LocalDateTime.now());
-                    System.out.println("N° " + reclamo.getNumero() + " | Lote " + lote.getNumero()
-                            + " | " + reclamo.getTipo() + " | Prioridad " + reclamo.getPrioridad()
-                            + " | " + reclamo.getEstado() + " | Responsable: " + responsable
-                            + " | Antiguedad: " + dias + " dias");
-                    cantidad++;
+                    pendientes.add(reclamo);
                 }
             }
         }
-        if (cantidad == 0) {
+        // Orden natural de Reclamo (Comparable): prioridad y luego antiguedad
+        Collections.sort(pendientes);
+        for (Reclamo reclamo : pendientes) {
+            String responsable = reclamo.getResponsable() == null
+                    ? "sin asignar" : reclamo.getResponsable().getNombreCompleto();
+            long dias = ChronoUnit.DAYS.between(reclamo.getFecha(), LocalDateTime.now());
+            System.out.println("N° " + reclamo.getNumero() + " | Lote " + reclamo.getLote().getNumero()
+                    + " | " + reclamo.getTipo() + " | Prioridad " + reclamo.getPrioridad()
+                    + " | " + reclamo.getEstado() + " | Responsable: " + responsable
+                    + " | Antiguedad: " + dias + " dias");
+        }
+        if (pendientes.isEmpty()) {
             System.out.println("No hay reclamos pendientes.");
         }
     }
@@ -50,7 +59,10 @@ public class GeneradorReportes {
     public void reporteMorosidad() {
         System.out.println("=== Morosidad por lote ===");
         int cantidad = 0;
-        for (Lote lote : barrio.getLotes()) {
+        List<Lote> lotes = new ArrayList<>(barrio.getLotes());
+        // Orden personalizado (Comparator): de mayor a menor deuda
+        lotes.sort(Comparator.comparingDouble((Lote lote) -> lote.getDeudaTotal()).reversed());
+        for (Lote lote : lotes) {
             if (lote.esMoroso()) {
                 double intereses = 0;
                 for (Expensa expensa : lote.getExpensas()) {

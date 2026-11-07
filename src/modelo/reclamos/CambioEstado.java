@@ -1,8 +1,9 @@
 package modelo.reclamos;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
-public class CambioEstado {
+public class CambioEstado implements Serializable {
     private LocalDateTime fecha;
     private EstadoReclamo estado;
     private String observacion;
