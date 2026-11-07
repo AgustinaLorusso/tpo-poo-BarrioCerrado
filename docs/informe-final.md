@@ -1,4 +1,4 @@
-# Informe final rediseño
+# Informe final
 
 TP Integrador de Programación Orientada a Objetos
 Propuesta A: Gestión de un barrio cerrado (Los Aromos)
