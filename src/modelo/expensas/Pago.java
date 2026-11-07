@@ -1,12 +1,13 @@
 package modelo.expensas;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 /** El pago original es inmutable: las correcciones conservan su historial. */
-public class Pago {
+public class Pago implements Serializable {
     private final LocalDate fecha;
     private final double importe;
     private final MedioPago medioPago;

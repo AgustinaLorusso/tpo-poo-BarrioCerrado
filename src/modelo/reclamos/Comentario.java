@@ -1,9 +1,10 @@
 package modelo.reclamos;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import modelo.personas.Persona;
 
-public class Comentario {
+public class Comentario implements Serializable {
     private LocalDateTime fecha;
     private String texto;
     private Persona autor;

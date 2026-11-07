@@ -1,5 +1,6 @@
 package modelo.barrio;
 
+import java.io.Serializable;
 import modelo.personas.Vecino;
 import modelo.expensas.*;
 import modelo.visitas.Visita;
@@ -8,7 +9,7 @@ import modelo.reclamos.Reclamo;
 import java.time.LocalDate;
 import java.util.*;
 
-public class Lote {
+public class Lote implements Serializable {
     private final int numero;
     private double superficie;
     private Vecino titular;

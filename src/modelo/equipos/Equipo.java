@@ -1,12 +1,13 @@
 package modelo.equipos;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import modelo.personas.Persona;
 import modelo.reclamos.Prioridad;
 
-public abstract class Equipo {
+public abstract class Equipo implements Serializable {
     protected String codigo;
     protected Sector sector;
     protected LocalDate fechaInstalacion;

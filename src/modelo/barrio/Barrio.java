@@ -1,5 +1,6 @@
 package modelo.barrio;
 
+import java.io.Serializable;
 import modelo.expensas.PresupuestoMensual;
 import modelo.expensas.Expensa;
 import modelo.equipos.Sector;
@@ -7,7 +8,7 @@ import modelo.visitas.Visita;
 import java.time.LocalDateTime;
 import java.util.*;
 
-public class Barrio {
+public class Barrio implements Serializable {
     private final String nombre;
     private final List<Lote> lotes = new ArrayList<>();
     private final List<Sector> sectores = new ArrayList<>();

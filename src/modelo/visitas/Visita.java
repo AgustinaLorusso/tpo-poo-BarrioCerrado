@@ -1,5 +1,6 @@
 package modelo.visitas;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -7,7 +8,7 @@ import java.util.List;
 import modelo.barrio.Lote;
 import modelo.personas.Vecino;
 
-public abstract class Visita {
+public abstract class Visita implements Serializable {
     protected String nombreVisitante;
     protected String documentoVisitante;
     protected LocalTime horaDesde;

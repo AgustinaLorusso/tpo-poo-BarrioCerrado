@@ -1,3 +1,4 @@
+import modelo.excepciones.ReglaNegocioException;
 import modelo.barrio.Barrio;
 import modelo.barrio.Lote;
 import modelo.personas.*;
@@ -14,7 +15,7 @@ public class PruebaPaso4 {
     }
 
     private static void rechaza(Runnable accion, String mensaje) {
-        try { accion.run(); } catch (IllegalArgumentException | IllegalStateException e) {
+        try { accion.run(); } catch (IllegalArgumentException | IllegalStateException | ReglaNegocioException e) {
             comprobaciones++; return;
         }
         throw new AssertionError(mensaje);

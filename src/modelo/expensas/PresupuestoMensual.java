@@ -1,9 +1,10 @@
 package modelo.expensas;
 
+import java.io.Serializable;
 import java.time.YearMonth;
 import java.util.Objects;
 
-public class PresupuestoMensual {
+public class PresupuestoMensual implements Serializable {
     private final String periodo;
     private final double monto;
 

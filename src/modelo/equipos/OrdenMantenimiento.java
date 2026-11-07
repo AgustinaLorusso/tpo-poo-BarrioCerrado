@@ -1,10 +1,11 @@
 package modelo.equipos;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import modelo.personas.EmpleadoMantenimiento;
 import modelo.reclamos.Prioridad;
 
-public class OrdenMantenimiento {
+public class OrdenMantenimiento implements Serializable {
     private static int ultimoNumero = 0;
 
     private int numero;
@@ -17,6 +18,15 @@ public class OrdenMantenimiento {
     private Equipo equipo;
     private EmpleadoMantenimiento asignadaA;
     private EmpleadoMantenimiento tecnico;
+
+    // Persistencia: el contador es static y no se guarda con el objeto
+    public static int getUltimoNumero() {
+        return ultimoNumero;
+    }
+
+    public static void setUltimoNumero(int numero) {
+        ultimoNumero = numero;
+    }
 
     // RF23: prioridad automatica segun el tipo de equipo
     public OrdenMantenimiento(Falla falla, EmpleadoMantenimiento empleado) {
