@@ -37,12 +37,12 @@ Diferencias entre el diagrama de clases de la Etapa 1 y la implementación final
 
 | Integrante | Tareas | Pull requests |
 |---|---|---|
-| Thomas Delli Antoni | Documento de la Etapa 1; reclamos, equipos y mantenimiento, visitas y reportes (pasos 4, 6, 7 y 8); diagramas de secuencia; validaciones; asignación de roles y personas autorizadas (RF02 y RF03); requisitos técnicos (Comparable, excepción propia y persistencia); plan de pruebas | #1, #6, #8, #10, #11, #12 |
+| Thomas Delli Antoni | Reclamos, equipos y mantenimiento, visitas y reportes (pasos 4, 6, 7 y 8); diagramas de secuencia; validaciones; asignación de roles y personas autorizadas (RF02 y RF03); requisitos técnicos (Comparable, excepción propia y persistencia); plan de pruebas | #6, #8, #10, #11, #12 |
 
 | Agustina Lorusso | Clases de personas y enums (pasos 1 y 2) y sus pruebas; inicio de sesión y menús por rol; alta y baja de lotes y vecinos; revisión e integración de la mayoría de los PR | #4, #7, #9 |
 
 | Joaquina Dias Rato | Lotes, expensas, pagos, intereses, asientos de ajuste y morosidad (pasos 3 y 5), con sus pruebas | #5 |
-| Trabajo conjunto del grupo | Diagrama de clases (draw.io), justificación de SOLID y GRASP, supuestos | — |
+| Trabajo conjunto del grupo | Documento de la Etapa 1 (casos de uso, diagrama de clases y justificación de SOLID y GRASP), supuestos | #1 |
 
 Cada cambio se integró a `main` mediante un pull request revisado por otro integrante.
 
