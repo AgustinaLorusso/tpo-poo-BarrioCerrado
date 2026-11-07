@@ -4,8 +4,6 @@ TP Integrador de Programación Orientada a Objetos. Propuesta A: Gestión del ba
 
 Integrantes: Thomas Delli Antoni, Agustina Lorusso y Joaquina Dias Rato.
 
-> **Borrador.** Las partes marcadas con **[COMPLETAR]** las tiene que escribir el grupo. Las dificultades son propuestas sacadas del historial del repositorio y hay que revisarlas.
-
 ## 1. Cambios respecto del diseño original
 
 Diferencias entre el diagrama de clases de la Etapa 1 y la implementación final (diagrama de clases, Versión 3):
@@ -34,22 +32,24 @@ Diferencias entre el diagrama de clases de la Etapa 1 y la implementación final
 - **Mantener el diagrama igual al código:** el diagrama se hizo antes de programar y durante la implementación aparecieron métodos y asociaciones nuevos. Hicieron falta varias revisiones para que la Versión 3 coincidiera con el código.
 - **Cálculo de intereses y redondeo:** el interés es del 3 % mensual, proporcional a los días. El redondeo a centavos de cada lote puede dar una diferencia de centavos con el presupuesto total.
 - **Persistencia de los atributos static:** la serialización no guarda los atributos `static`, como los contadores de números de reclamo y de orden y la lista de ingresos. Hubo que guardarlos aparte en `DatosSistema` y restaurarlos al cargar.
-- **[COMPLETAR]** Otras dificultades del grupo, por ejemplo de organización, tiempos o temas de la materia que costaron más.
 
 ## 3. Distribución de tareas
 
 | Integrante | Tareas | Pull requests |
 |---|---|---|
 | Thomas Delli Antoni | Documento de la Etapa 1; reclamos, equipos y mantenimiento, visitas y reportes (pasos 4, 6, 7 y 8); diagramas de secuencia; validaciones; asignación de roles y personas autorizadas (RF02 y RF03); requisitos técnicos (Comparable, excepción propia y persistencia); plan de pruebas | #1, #6, #8, #10, #11, #12 |
+
 | Agustina Lorusso | Clases de personas y enums (pasos 1 y 2) y sus pruebas; inicio de sesión y menús por rol; alta y baja de lotes y vecinos; revisión e integración de la mayoría de los PR | #4, #7, #9 |
+
 | Joaquina Dias Rato | Lotes, expensas, pagos, intereses, asientos de ajuste y morosidad (pasos 3 y 5), con sus pruebas | #5 |
-| **[COMPLETAR]** | Diagrama de clases (draw.io), justificación de SOLID y GRASP, supuestos | — |
+| Trabajo conjunto del grupo | Diagrama de clases (draw.io), justificación de SOLID y GRASP, supuestos | — |
 
 Cada cambio se integró a `main` mediante un pull request revisado por otro integrante.
 
 ## 4. Reflexión del grupo
 
-**[COMPLETAR]** Por ejemplo:
-- qué aprendimos al pasar del diseño UML al código;
-- qué haríamos distinto, como cerrar el diagrama antes o acordar las clases compartidas desde el principio;
-- cómo nos resultó trabajar con ramas y pull requests.
+Al leer la consigna, el problema parecía acotado: los casos de uso y los primeros diagramas eran simples y con pocas clases. Al empezar a programar, la complejidad aumentó de forma considerable. Cada caso de uso requería más información de la prevista, aparecieron nuevas relaciones entre clases y reglas de negocio que en el diseño no se veían. Por ese motivo, el diagrama de clases tuvo que actualizarse varias veces, hasta llegar a la Versión 3.
+
+Esta experiencia nos mostró que el diseño inicial es un punto de partida y no una versión definitiva, y que conviene revisarlo a medida que avanza la implementación. También comprobamos la utilidad de los patrones GRASP y los principios SOLID para decidir qué clase debe asumir cada responsabilidad cuando el modelo crece.
+
+En cuanto a la organización, el trabajo con ramas y pull requests no fue una novedad para el grupo, ya que era una práctica que veníamos aplicando. Esto facilitó dividir las tareas, trabajar en paralelo y revisar los cambios de cada integrante antes de integrarlos a la rama principal.
