@@ -42,7 +42,7 @@ Propuesta A: sistema para gestionar reclamos, expensas, luminarias y cámaras, e
 
 ## Cómo ejecutar
 
-Requiere Java 11 o superior. Desde la raíz del repositorio:
+Requiere Java 17 o superior. Desde la raíz del repositorio:
 
 ```
 javac -encoding UTF-8 -d bin $(find src test -name '*.java')
